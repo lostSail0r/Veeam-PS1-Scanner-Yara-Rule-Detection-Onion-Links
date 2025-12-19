@@ -236,49 +236,53 @@ rule tor_c2_configuration {
 ## Compatibility
 
 - **Tested with:** YARA v4.x+
-- **Veeam Support:** Veeam Backup & Replication v12.1+ (including v12.3.2.4165 and v13)
-- **Note:** If you encounter errors related to `MB` in filesize checks, the rules now use explicit byte values for maximum compatibility.
+- **Veeam Support:** Veeam Backup & Replication v12.x (including v12.3.2.4165 and v13; if ps1 added for V13-Windows will need PS V7)
+- **Note:** If you encounter errors related to `MB` in filesize checks, the rules now use explicit byte values for maximum compatibility (also update your yara ;).
+- In my experience within surebackup or securerestore context, the // comment marks can result in error
 
 ---
 
 ## Feedback & Recommendations
 
-### ✅ Strengths
+###  Why Use This (other than if you are a Veeam customer with at least VDP Advanced
 1. **Well-structured metadata**: Clear descriptions, author attribution, and severity levels make triage easier.
 2. **Multi-protocol coverage**: Captures v2/v3 onion addresses, HTTP(S), and `tor://` protocols.
 3. **Context-aware detection**: Combining `.onion` presence with ransomware keywords reduces false positives.
-4. **Veeam compatibility**: Explicit filesize limits and tested compatibility with Veeam v12.1+/v13.
+4. **Veeam compatibility**: Explicit filesize limits and tested compatibility with Veeam v12.x+/v13 (not on VSA but in theory could work; will update if I test from new V13 VSA or linux mount server).
 
-### 🔧 Improvements Implemented
+### Improvements Implemented So Far
 
 #### 1. Filesize Syntax Consistency
-- Replaced `MB` suffix with explicit byte values for universal YARA compatibility
+- Replaced `MB` suffix with explicit byte values for universal YARA compatibility (Worked fine in homelab but if yara installed manually and older version MB not valid)
 - 25 MB = 26214400 bytes
 - 50 MB = 52428800 bytes
 - 17.75 MB = 18612019 bytes
 
 #### 2. Performance Optimization
-- Moved `filesize` checks to the beginning of conditions for faster short-circuiting
-- Reduced unnecessary string comparisons when file is too large
+- Moved `filesize` checks to the beginning of conditions for faster short-circuiting (for a less impactful rule filesize is still conditionally at the end which could in theory slow down the scan)
+- Reduced unnecessary string comparisons when file is too large (may want to change this based on your environment; the idea is to limit DOS'ing yourself by scanning every file small and large while setting thresholds that minimize oversight while boosting performance
 
 #### 3. Regex Patterns
 - Hyphen in character class `[\/\w.\-?=&]*` is properly escaped
 - Dot (`.`) inside brackets is literal, matching actual dots in URLs
+- Enhanced ransomware portal and c2 rules; simple onion rule is wide in scope but almost to a fault; likely would catch many false positives (mitigated by filesize mostly atm)
 
-### 💡 Additional Recommendations
+### Additional Recommendations (For myself or Others :) )
 
 #### Bitcoin Address Enhancement
-Consider adding legacy Bitcoin address formats:
+Consider adding legacy Bitcoin address formats*:
 ```yara
 $btc_legacy = /\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b/  // P2PKH/P2SH
 $btc_segwit = /\bbc1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{38,87}\b/  // Bech32/Bech32m
 ```
 
 #### Monero (XMR) Addresses
-Many ransomware groups now prefer Monero:
+Many ransomware groups now prefer Monero (this may have already been done:
 ```yara
 $xmr_addr = /\b4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}\b/
 ```
+
+#### Veeam Intelligence and other AI's did suggest that some of the string based rules could use some fine tuning to minimize false positives - will have to test each change before applying them here if noticeable difference
 
 #### False Positive Mitigation for `onion_links_simple`
 ```yara
@@ -330,12 +334,6 @@ yara -r --json onion_ransomware_rules.yar /samples > results.json
 
 ---
 
-## License
-
-MIT License
-
----
-
 ## Disclaimer
 
 These rules are provided as-is for educational, research, and defensive security purposes. Always test in a safe, controlled environment before deploying in production. The author is not responsible for any misuse or damage caused by these rules.
@@ -343,5 +341,5 @@ These rules are provided as-is for educational, research, and defensive security
 ---
 
 **Author:** CG  
-**Category:** Ransomware, Tor, C2 Detection  
+**Category:** Ransomware, Tor/Onion, C2 Detection  
 **Last Updated:** December 18, 2025
