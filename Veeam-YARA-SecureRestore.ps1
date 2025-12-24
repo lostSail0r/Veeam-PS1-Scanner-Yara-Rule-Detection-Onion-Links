@@ -42,7 +42,7 @@ function Write-Log {
     Add-Content -Path $logFile -Value $logEntry
     
     <#
-    Also write to Veeam job log if cmdlet available ('tis not; only read event log in surebackup so keep this as placeholder and if it does exist theres error handling that basically does nothing haha - realistically the idea is to have the console show what https://www.perplexity.ai/search/verify-the-attached-yar-file-a-2UhX0YKzSVGwq7mYLLh1Mw?0=d simulated onion link yara scan results showed and redirect out that as well as if you wanna be fancy surebackup or other larger errors that may occur mid scan )
+        Placeholder since that cmdlet doesnt exist yet (only relevant for unified veeam logging; otherwise the paths for this script log are defined
     #>
     try {
         if (Get-Command Add-VBRJobLogEvent -ErrorAction SilentlyContinue) {
@@ -287,8 +287,9 @@ function Convert-ToWindowsPath {
     $relativePath = $MountedPath -replace [regex]::Escape($VolumeRoot), ''
     $relativePath = $relativePath.TrimStart('\')
     
-    # Assume original was C: drive (most common)
-    # In production, could enhance to detect actual drive from mount metadata
+    # Assumes original was C: drive (for testing in lab but not common in prod)
+    # Currently as is will show correct path but regardless of drive letter will show C:\..
+    # The logs from the scan should show the letter but this is something I'l have fixed asap
     return "C:\$relativePath"
 }
 
